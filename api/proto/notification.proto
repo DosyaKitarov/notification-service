@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package grpc;
+
+option go_package = "pkg/grpc";
+service NotificationService {
+  rpc SendRegistrationNotification(AuthNotificationRequest) returns (SendNotificationResponse);
+  rpc SendLoginNotification(AuthNotificationRequest) returns (SendNotificationResponse);
+  rpc SendRecipientNotification(UserNotificationRequest) returns (SendNotificationResponse);
+  rpc SendInvestorNotification(UserNotificationRequest) returns (SendNotificationResponse);
+}
+
+enum NotificationType {
+  NOTIFICATION_TYPE_UNKNOWN = 0;
+  REGISTRATION_CONFIRMATION = 1;
+  LOGIN_ALERT = 2;
+  INVESTMENT_SUCCESS = 3;
+  INVESTED_IN_YOU = 4;
+}
+
+enum NotificationChannel {
+  NOTIFICATION_CHANNEL_UNKNOWN = 0;
+  EMAIL = 1;
+  WEB = 2;
+}
+
+message AuthNotificationRequest {
+  uint64 user_id = 1;
+  NotificationChannel channel = 2; // Только EMAIL
+  map<string, string> metadata = 3; // subject, body
+}
+
+message UserNotificationRequest {
+  uint64 user_id = 1; // Инвестор
+  repeated NotificationChannel channels = 2; // EMAIL и WEB
+  map<string, string> metadata = 3; // subject, body, url
+}
+
+message SendNotificationResponse {
+  bool success = 1;
+  string error = 2;
+}
