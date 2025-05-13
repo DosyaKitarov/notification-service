@@ -44,12 +44,14 @@ func (h *NotificationServiceHandler) SendRegistrationNotification(ctx context.Co
 
 	var (
 		userID   = req.GetUserId()
+		email    = req.GetEmail()
 		channel  = service.ToNotificationChannel(req.GetChannel())
 		metaData = req.GetMetadata()
 	)
 
 	notification := &service.AuthNotificationRequest{
 		UserID:              userID,
+		Email:               email,
 		NotificationChannel: channel,
 		Metadata:            metaData,
 	}

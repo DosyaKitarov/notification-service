@@ -13,6 +13,7 @@ import (
 	"github.com/DosyaKitarov/notification-service/internal/service"
 	"github.com/DosyaKitarov/notification-service/pkg/config"
 	"github.com/DosyaKitarov/notification-service/pkg/database"
+	"github.com/DosyaKitarov/notification-service/pkg/email"
 	pb "github.com/DosyaKitarov/notification-service/pkg/grpc"
 )
 
@@ -49,9 +50,14 @@ func main() {
 		logger.Fatal("Failed to listen on port 8080", zap.Error(err))
 	}
 
+	emailSender := &email.EmailSender{
+		Sender:   cfg.Smtp.Sender,
+		Password: cfg.Smtp.Password,
+	}
+
 	grpcServer := grpc.NewServer()
 	repo := repository.NewRepository(db, logger)
-	service := service.NewNotificationService(repo)
+	service := service.NewNotificationService(repo, *emailSender)
 	handler := handler.NewNotificationServiceHandler(db, service, logger)
 
 	pb.RegisterNotificationServiceServer(grpcServer, handler)

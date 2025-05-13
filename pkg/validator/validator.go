@@ -15,6 +15,15 @@ func ValidateAuthNotificationRequest(req service.AuthNotificationRequest) error 
 	if req.NotificationChannel == service.NotificationChannelUnknown {
 		return errors.New("NotificationChannel cannot be empty")
 	}
+	if req.Email == "" {
+		return errors.New("Email cannot be empty")
+	}
+	if req.Metadata == nil {
+		return errors.New("Metadata cannot be nil")
+	}
+	if len(req.Metadata) == 0 {
+		return errors.New("Metadata cannot be empty")
+	}
 	return nil
 }
 
@@ -29,6 +38,9 @@ func ValidateUserNotificationRequest(req service.UserNotificationRequest) error 
 		if channel == service.NotificationChannelUnknown {
 			return errors.New("Channels cannot contain an empty NotificationChannel")
 		}
+	}
+	if req.Email == "" {
+		return errors.New("Email cannot be empty")
 	}
 	return nil
 }

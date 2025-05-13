@@ -128,8 +128,9 @@ func (NotificationChannel) EnumDescriptor() ([]byte, []int) {
 type AuthNotificationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        uint64                 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Channel       NotificationChannel    `protobuf:"varint,2,opt,name=channel,proto3,enum=grpc.NotificationChannel" json:"channel,omitempty"`                                              // Только EMAIL
-	Metadata      map[string]string      `protobuf:"bytes,3,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // subject, body
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`                                                                                 // email пользователя
+	Channel       NotificationChannel    `protobuf:"varint,3,opt,name=channel,proto3,enum=grpc.NotificationChannel" json:"channel,omitempty"`                                              // Только EMAIL
+	Metadata      map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // subject, body
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -171,6 +172,13 @@ func (x *AuthNotificationRequest) GetUserId() uint64 {
 	return 0
 }
 
+func (x *AuthNotificationRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
 func (x *AuthNotificationRequest) GetChannel() NotificationChannel {
 	if x != nil {
 		return x.Channel
@@ -188,8 +196,9 @@ func (x *AuthNotificationRequest) GetMetadata() map[string]string {
 type UserNotificationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        uint64                 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`                                                                // Инвестор
-	Channels      []NotificationChannel  `protobuf:"varint,2,rep,packed,name=channels,proto3,enum=grpc.NotificationChannel" json:"channels,omitempty"`                                     // EMAIL и WEB
-	Metadata      map[string]string      `protobuf:"bytes,3,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // subject, body, url
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`                                                                                 // email пользователя
+	Channels      []NotificationChannel  `protobuf:"varint,3,rep,packed,name=channels,proto3,enum=grpc.NotificationChannel" json:"channels,omitempty"`                                     // EMAIL и WEB
+	Metadata      map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // subject, body, url
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -229,6 +238,13 @@ func (x *UserNotificationRequest) GetUserId() uint64 {
 		return x.UserId
 	}
 	return 0
+}
+
+func (x *UserNotificationRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
 }
 
 func (x *UserNotificationRequest) GetChannels() []NotificationChannel {
@@ -301,18 +317,20 @@ var File_notification_proto protoreflect.FileDescriptor
 
 const file_notification_proto_rawDesc = "" +
 	"\n" +
-	"\x12notification.proto\x12\x04grpc\"\xed\x01\n" +
+	"\x12notification.proto\x12\x04grpc\"\x83\x02\n" +
 	"\x17AuthNotificationRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x04R\x06userId\x123\n" +
-	"\achannel\x18\x02 \x01(\x0e2\x19.grpc.NotificationChannelR\achannel\x12G\n" +
-	"\bmetadata\x18\x03 \x03(\v2+.grpc.AuthNotificationRequest.MetadataEntryR\bmetadata\x1a;\n" +
+	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x123\n" +
+	"\achannel\x18\x03 \x01(\x0e2\x19.grpc.NotificationChannelR\achannel\x12G\n" +
+	"\bmetadata\x18\x04 \x03(\v2+.grpc.AuthNotificationRequest.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xef\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x85\x02\n" +
 	"\x17UserNotificationRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x04R\x06userId\x125\n" +
-	"\bchannels\x18\x02 \x03(\x0e2\x19.grpc.NotificationChannelR\bchannels\x12G\n" +
-	"\bmetadata\x18\x03 \x03(\v2+.grpc.UserNotificationRequest.MetadataEntryR\bmetadata\x1a;\n" +
+	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x125\n" +
+	"\bchannels\x18\x03 \x03(\x0e2\x19.grpc.NotificationChannelR\bchannels\x12G\n" +
+	"\bmetadata\x18\x04 \x03(\v2+.grpc.UserNotificationRequest.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"J\n" +
