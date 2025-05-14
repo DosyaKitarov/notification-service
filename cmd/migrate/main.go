@@ -29,6 +29,9 @@ func main() {
 		log.Fatalf("Failed to create migrate instance: %v", err)
 	}
 
+	if err := m.Down(); err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("Failed to apply migrations: %v", err)
+	}
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		log.Fatalf("Failed to apply migrations: %v", err)
 	}

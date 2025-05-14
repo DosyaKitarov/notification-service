@@ -34,10 +34,10 @@ func (r *Repository) SaveNotificationWithTx(ctx context.Context, tx *sql.Tx, n s
 	}
 
 	query := `
-        INSERT INTO notifications (user_id, type, notification_channel, metadata)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO notifications (user_id,email, name, type, notification_channel, metadata)
+        VALUES ($1, $2, $3, $4, $5, $6	)
     `
-	_, err = tx.ExecContext(ctx, query, n.UserID, n.NotificationType, notificationChannelJSON, metadataJSON)
+	_, err = tx.ExecContext(ctx, query, n.UserID, n.Email, n.Name, n.NotificationType, notificationChannelJSON, metadataJSON)
 	if err != nil {
 		r.logger.Error("Failed to save notification to database", zap.Error(err))
 		return err

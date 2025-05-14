@@ -11,6 +11,7 @@ type Config struct {
 	} `yaml:"database"`
 	Smtp struct {
 		Sender   string `yaml:"sender_email"`
-		Password string `yaml:"sender_password"`
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
 	} `yaml:"smtp"`
 }

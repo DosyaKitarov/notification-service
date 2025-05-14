@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/DosyaKitarov/notification-service/pkg/email"
+	"go.uber.org/zap"
 )
 
 type NotificationRepository interface {
@@ -16,12 +17,14 @@ type NotificationRepository interface {
 type NotificationService struct {
 	repo        NotificationRepository
 	emailSender email.EmailSender
+	Logger      *zap.Logger
 }
 
-func NewNotificationService(repo NotificationRepository, emailSender email.EmailSender) *NotificationService {
+func NewNotificationService(repo NotificationRepository, emailSender email.EmailSender, logger *zap.Logger) *NotificationService {
 	return &NotificationService{
 		repo:        repo,
 		emailSender: emailSender,
+		Logger:      logger,
 	}
 }
 
@@ -57,12 +60,94 @@ func (s *NotificationService) RegistrationNotification(ctx context.Context, noti
 	log.Println("Notification saved successfully")
 
 	// Отправка email (включена в транзакцию)
-	err = s.emailSender.SendEmail(notification.Metadata, notification.Email)
+	err = s.emailSender.SendAuthEmail(EmailTemplateRegistration, notification.Email, notification.Name)
 	if err != nil {
 		log.Printf("Error sending email: %v", err)
 		return err
 	}
 	log.Println("Email sent successfully")
 
+	return nil
+}
+
+func (s *NotificationService) LoginNotification(ctx context.Context, notification AuthNotificationRequestDTO) error {
+	log.Println("Starting LoginNotification process")
+
+	// Начало транзакции
+	tx, err := s.repo.BeginTransaction(ctx)
+	if err != nil {
+		log.Printf("Error starting transaction: %v", err)
+		return err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				log.Printf("Error committing transaction: %v", commitErr)
+				err = commitErr
+			}
+		}
+	}()
+
+	// Сохранение уведомления
+	err = s.repo.SaveNotificationWithTx(ctx, tx, notification.ToModel())
+	if err != nil {
+		log.Printf("Error saving notification: %v", err)
+		return err
+	}
+	log.Println("Notification saved successfully")
+
+	// Отправка email (включена в транзакцию)
+	err = s.emailSender.SendAuthEmail(EmailTemplateLogin, notification.Email, notification.Name)
+	if err != nil {
+		log.Printf("Error sending email: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *NotificationService) UserNotification(ctx context.Context, notification UserNotificationRequestDTO) error {
+	log.Println("Starting UserNotification process")
+
+	// Начало транзакции
+	tx, err := s.repo.BeginTransaction(ctx)
+	if err != nil {
+		log.Printf("Error starting transaction: %v", err)
+		return err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				log.Printf("Error committing transaction: %v", commitErr)
+				err = commitErr
+			}
+		}
+	}()
+
+	// Сохранение уведомления
+	err = s.repo.SaveNotificationWithTx(ctx, tx, notification.ToModel())
+	if err != nil {
+		log.Printf("Error saving notification: %v", err)
+		return err
+	}
+	log.Println("Notification saved successfully")
+
+	// Отправка email (включена в транзакцию)
+	err = s.emailSender.SendUserEmail(notification.Email, notification.Metadata)
+	if err != nil {
+		log.Printf("Error sending email: %v", err)
+		return err
+	}
+	log.Println("Email sent successfully")
 	return nil
 }

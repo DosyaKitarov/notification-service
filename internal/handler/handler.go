@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/DosyaKitarov/notification-service/internal/service"
 	pb "github.com/DosyaKitarov/notification-service/pkg/grpc"
@@ -10,50 +11,40 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	NotificationTypeRegistration = "registration_confirmation"
-	NotificationTypeLogin        = "login_alert"
-	NotificationTypeInvestment   = "investment_success"
-	NotificationTypeInvestor     = "invested_in_you"
-)
-
 type NotificationServiceHandler struct { // Add logic to handle registration notification
-	*service.NotificationService
+	Service
 	pb.UnimplementedNotificationServiceServer
 	db     *sql.DB
 	logger *zap.Logger
 }
 
 type Service interface {
-	RegistrationNotification(ctx context.Context, notification service.AuthNotificationRequest) error
+	RegistrationNotification(ctx context.Context, notification service.AuthNotificationRequestDTO) error
+	LoginNotification(ctx context.Context, notification service.AuthNotificationRequestDTO) error
+	UserNotification(ctx context.Context, notification service.UserNotificationRequestDTO) error
 }
 
-func NewNotificationServiceHandler(db *sql.DB, service *service.NotificationService, logger *zap.Logger) *NotificationServiceHandler {
+func NewNotificationServiceHandler(db *sql.DB, service Service, logger *zap.Logger) *NotificationServiceHandler {
 	return &NotificationServiceHandler{
-		db:                  db,
-		NotificationService: service,
-		logger:              logger,
+		db:      db,
+		Service: service,
+		logger:  logger,
 	}
 }
 
 func (h *NotificationServiceHandler) SendRegistrationNotification(ctx context.Context, req *pb.AuthNotificationRequest) (*pb.SendNotificationResponse, error) {
-	h.logger.Info("Received SendRegistrationNotification request",
-		zap.Uint64("user_id", req.GetUserId()),
-		zap.String("channel", req.GetChannel().String()),
-	)
+	h.logger.Info("Received SendRegistrationNotification request", zap.Any("request", req))
 
 	var (
-		userID   = req.GetUserId()
-		email    = req.GetEmail()
-		channel  = service.ToNotificationChannel(req.GetChannel())
-		metaData = req.GetMetadata()
+		userID  = req.GetUserId()
+		email   = req.GetEmail()
+		channel = service.ToNotificationChannel(1)
 	)
 
 	notification := &service.AuthNotificationRequest{
 		UserID:              userID,
 		Email:               email,
 		NotificationChannel: channel,
-		Metadata:            metaData,
 	}
 
 	if err := validator.ValidateAuthNotificationRequest(*notification); err != nil {
@@ -61,7 +52,7 @@ func (h *NotificationServiceHandler) SendRegistrationNotification(ctx context.Co
 		return &pb.SendNotificationResponse{Success: false, Error: err.Error()}, nil
 	}
 
-	if err := h.NotificationService.RegistrationNotification(ctx, notification.ToDTO(NotificationTypeRegistration)); err != nil {
+	if err := h.Service.RegistrationNotification(ctx, notification.ToDTO(string(service.NotificationTypeRegistration))); err != nil {
 		h.logger.Error("Failed to process SendRegistrationNotification", zap.Error(err))
 		return &pb.SendNotificationResponse{Success: false, Error: err.Error()}, nil
 	}
@@ -73,16 +64,70 @@ func (h *NotificationServiceHandler) SendRegistrationNotification(ctx context.Co
 }
 
 func (h *NotificationServiceHandler) SendLoginNotification(ctx context.Context, req *pb.AuthNotificationRequest) (*pb.SendNotificationResponse, error) {
-	// Add logic to handle login notification
+	h.logger.Info("Received SendLoginNotification request", zap.Any("request", req))
+
+	fmt.Printf("\n\n%+v\n\n", req)
+
+	var (
+		userID  = req.GetUserId()
+		email   = req.GetEmail()
+		name    = req.GetName()
+		channel = service.ToNotificationChannel(1)
+	)
+
+	notification := &service.AuthNotificationRequest{
+		UserID:              userID,
+		Email:               email,
+		Name:                name,
+		NotificationChannel: channel,
+	}
+
+	if err := validator.ValidateAuthNotificationRequest(*notification); err != nil {
+		h.logger.Error("Validation failed for SendLoginNotification", zap.Error(err))
+		return &pb.SendNotificationResponse{Success: false, Error: err.Error()}, nil
+	}
+
+	if err := h.Service.LoginNotification(ctx, notification.ToDTO(string(service.NotificationTypeLogin))); err != nil {
+		h.logger.Error("Failed to process SendLoginNotification", zap.Error(err))
+		return &pb.SendNotificationResponse{Success: false, Error: err.Error()}, nil
+	}
+
+	h.logger.Info("Successfully processed SendLoginNotification",
+		zap.Uint64("user_id", userID),
+	)
+
 	return &pb.SendNotificationResponse{Success: true}, nil
 }
 
-func (h *NotificationServiceHandler) SendInvestmentNotification(ctx context.Context, req *pb.UserNotificationRequest) (*pb.SendNotificationResponse, error) {
-	// Add logic to handle investment notification
-	return &pb.SendNotificationResponse{Success: true}, nil
-}
+func (h *NotificationServiceHandler) SendUserNotification(ctx context.Context, req *pb.UserNotificationRequest) (*pb.SendNotificationResponse, error) {
+	h.logger.Info("Received SendUserNotification request", zap.Any("request", req))
+	var (
+		userID           = req.GetUserId()
+		email            = req.GetEmail()
+		name             = req.GetName()
+		notificationType = req.GetType()
+		channels         = req.GetChannels()
+		metadata         = req.GetMetadata()
+	)
 
-func (h *NotificationServiceHandler) SendInvestorNotification(ctx context.Context, req *pb.UserNotificationRequest) (*pb.SendNotificationResponse, error) {
-	// Add logic to handle investor notification
+	notification := &service.UserNotificationRequest{
+		UserID:   userID,
+		Email:    email,
+		Name:     name,
+		Type:     service.ToNotificationType(notificationType),
+		Channels: service.ToNotificationChannels(channels),
+		Metadata: metadata,
+	}
+
+	if err := validator.ValidateUserNotificationRequest(*notification); err != nil {
+		h.logger.Error("Validation failed for SendUserNotification", zap.Error(err))
+		return &pb.SendNotificationResponse{Success: false, Error: err.Error()}, nil
+	}
+
+	if err := h.Service.UserNotification(ctx, notification.ToDTO()); err != nil {
+		h.logger.Error("Failed to process SendUserNotification", zap.Error(err))
+		return &pb.SendNotificationResponse{Success: false, Error: err.Error()}, nil
+	}
+
 	return &pb.SendNotificationResponse{Success: true}, nil
 }

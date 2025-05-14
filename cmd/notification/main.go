@@ -52,12 +52,18 @@ func main() {
 
 	emailSender := &email.EmailSender{
 		Sender:   cfg.Smtp.Sender,
+		Username: cfg.Smtp.Username,
 		Password: cfg.Smtp.Password,
+	}
+
+	err = emailSender.LoadTemplates("pkg/email/templates.json")
+	if err != nil {
+		logger.Fatal("Failed to load templates", zap.Error(err))
 	}
 
 	grpcServer := grpc.NewServer()
 	repo := repository.NewRepository(db, logger)
-	service := service.NewNotificationService(repo, *emailSender)
+	service := service.NewNotificationService(repo, *emailSender, logger)
 	handler := handler.NewNotificationServiceHandler(db, service, logger)
 
 	pb.RegisterNotificationServiceServer(grpcServer, handler)

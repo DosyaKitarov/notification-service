@@ -6,16 +6,16 @@ option go_package = "pkg/grpc";
 service NotificationService {
   rpc SendRegistrationNotification(AuthNotificationRequest) returns (SendNotificationResponse);
   rpc SendLoginNotification(AuthNotificationRequest) returns (SendNotificationResponse);
-  rpc SendRecipientNotification(UserNotificationRequest) returns (SendNotificationResponse);
-  rpc SendInvestorNotification(UserNotificationRequest) returns (SendNotificationResponse);
+  rpc SendUserNotification(UserNotificationRequest) returns (SendNotificationResponse);
 }
 
 enum NotificationType {
   NOTIFICATION_TYPE_UNKNOWN = 0;
-  REGISTRATION_CONFIRMATION = 1;
-  LOGIN_ALERT = 2;
+  REGISTRATION = 1;
+  LOGIN = 2;
   INVESTMENT_SUCCESS = 3;
   INVESTED_IN_YOU = 4;
+  OTHER = 5;
 }
 
 enum NotificationChannel {
@@ -27,15 +27,17 @@ enum NotificationChannel {
 message AuthNotificationRequest {
   uint64 user_id = 1;
   string email = 2; // email пользователя
-  NotificationChannel channel = 3; // Только EMAIL
-  map<string, string> metadata = 4; // subject, body
+  string name = 3; // имя пользователя
 }
 
 message UserNotificationRequest {
   uint64 user_id = 1; // Инвестор
   string email = 2; // email пользователя
-  repeated NotificationChannel channels = 3; // EMAIL и WEB
-  map<string, string> metadata = 4; // subject, body, url
+  string name = 3; // имя пользователя
+  NotificationType type = 4; // тип уведомления
+  repeated NotificationChannel channels = 5; // EMAIL и WEB
+  map<string, string> metadata = 6; // subject, body, url
+
 }
 
 message SendNotificationResponse {

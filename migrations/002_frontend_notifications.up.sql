@@ -1,10 +1,14 @@
-CREATE TABLE notifications (
+ALTER TABLE notifications RENAME TO email_notifications;
+
+ALTER TABLE email_notifications DROP COLUMN notification_channel;
+
+CREATE TABLE frontend_notifications (
     id SERIAL PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     type VARCHAR(255) NOT NULL,
-    notification_channel JSONB NOT NULL, -- Changed to JSONB to store JSON arrays
-    metadata JSONB, -- Added metadata column to store additional details
+    metadata JSONB,
+    is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

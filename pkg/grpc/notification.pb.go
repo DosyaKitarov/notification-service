@@ -25,27 +25,30 @@ type NotificationType int32
 
 const (
 	NotificationType_NOTIFICATION_TYPE_UNKNOWN NotificationType = 0
-	NotificationType_REGISTRATION_CONFIRMATION NotificationType = 1
-	NotificationType_LOGIN_ALERT               NotificationType = 2
+	NotificationType_REGISTRATION              NotificationType = 1
+	NotificationType_LOGIN                     NotificationType = 2
 	NotificationType_INVESTMENT_SUCCESS        NotificationType = 3
 	NotificationType_INVESTED_IN_YOU           NotificationType = 4
+	NotificationType_OTHER                     NotificationType = 5
 )
 
 // Enum value maps for NotificationType.
 var (
 	NotificationType_name = map[int32]string{
 		0: "NOTIFICATION_TYPE_UNKNOWN",
-		1: "REGISTRATION_CONFIRMATION",
-		2: "LOGIN_ALERT",
+		1: "REGISTRATION",
+		2: "LOGIN",
 		3: "INVESTMENT_SUCCESS",
 		4: "INVESTED_IN_YOU",
+		5: "OTHER",
 	}
 	NotificationType_value = map[string]int32{
 		"NOTIFICATION_TYPE_UNKNOWN": 0,
-		"REGISTRATION_CONFIRMATION": 1,
-		"LOGIN_ALERT":               2,
+		"REGISTRATION":              1,
+		"LOGIN":                     2,
 		"INVESTMENT_SUCCESS":        3,
 		"INVESTED_IN_YOU":           4,
+		"OTHER":                     5,
 	}
 )
 
@@ -128,9 +131,8 @@ func (NotificationChannel) EnumDescriptor() ([]byte, []int) {
 type AuthNotificationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        uint64                 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`                                                                                 // email пользователя
-	Channel       NotificationChannel    `protobuf:"varint,3,opt,name=channel,proto3,enum=grpc.NotificationChannel" json:"channel,omitempty"`                                              // Только EMAIL
-	Metadata      map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // subject, body
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"` // email пользователя
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`   // имя пользователя
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -179,26 +181,21 @@ func (x *AuthNotificationRequest) GetEmail() string {
 	return ""
 }
 
-func (x *AuthNotificationRequest) GetChannel() NotificationChannel {
+func (x *AuthNotificationRequest) GetName() string {
 	if x != nil {
-		return x.Channel
+		return x.Name
 	}
-	return NotificationChannel_NOTIFICATION_CHANNEL_UNKNOWN
-}
-
-func (x *AuthNotificationRequest) GetMetadata() map[string]string {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
+	return ""
 }
 
 type UserNotificationRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        uint64                 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`                                                                // Инвестор
 	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`                                                                                 // email пользователя
-	Channels      []NotificationChannel  `protobuf:"varint,3,rep,packed,name=channels,proto3,enum=grpc.NotificationChannel" json:"channels,omitempty"`                                     // EMAIL и WEB
-	Metadata      map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // subject, body, url
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`                                                                                   // имя пользователя
+	Type          NotificationType       `protobuf:"varint,4,opt,name=type,proto3,enum=grpc.NotificationType" json:"type,omitempty"`                                                       // тип уведомления
+	Channels      []NotificationChannel  `protobuf:"varint,5,rep,packed,name=channels,proto3,enum=grpc.NotificationChannel" json:"channels,omitempty"`                                     // EMAIL и WEB
+	Metadata      map[string]string      `protobuf:"bytes,6,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // subject, body, url
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -245,6 +242,20 @@ func (x *UserNotificationRequest) GetEmail() string {
 		return x.Email
 	}
 	return ""
+}
+
+func (x *UserNotificationRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *UserNotificationRequest) GetType() NotificationType {
+	if x != nil {
+		return x.Type
+	}
+	return NotificationType_NOTIFICATION_TYPE_UNKNOWN
 }
 
 func (x *UserNotificationRequest) GetChannels() []NotificationChannel {
@@ -317,41 +328,39 @@ var File_notification_proto protoreflect.FileDescriptor
 
 const file_notification_proto_rawDesc = "" +
 	"\n" +
-	"\x12notification.proto\x12\x04grpc\"\x83\x02\n" +
+	"\x12notification.proto\x12\x04grpc\"\\\n" +
 	"\x17AuthNotificationRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\x123\n" +
-	"\achannel\x18\x03 \x01(\x0e2\x19.grpc.NotificationChannelR\achannel\x12G\n" +
-	"\bmetadata\x18\x04 \x03(\v2+.grpc.AuthNotificationRequest.MetadataEntryR\bmetadata\x1a;\n" +
-	"\rMetadataEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x85\x02\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\"\xc5\x02\n" +
 	"\x17UserNotificationRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\x125\n" +
-	"\bchannels\x18\x03 \x03(\x0e2\x19.grpc.NotificationChannelR\bchannels\x12G\n" +
-	"\bmetadata\x18\x04 \x03(\v2+.grpc.UserNotificationRequest.MetadataEntryR\bmetadata\x1a;\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12*\n" +
+	"\x04type\x18\x04 \x01(\x0e2\x16.grpc.NotificationTypeR\x04type\x125\n" +
+	"\bchannels\x18\x05 \x03(\x0e2\x19.grpc.NotificationChannelR\bchannels\x12G\n" +
+	"\bmetadata\x18\x06 \x03(\v2+.grpc.UserNotificationRequest.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"J\n" +
 	"\x18SendNotificationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x14\n" +
-	"\x05error\x18\x02 \x01(\tR\x05error*\x8e\x01\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error*\x86\x01\n" +
 	"\x10NotificationType\x12\x1d\n" +
-	"\x19NOTIFICATION_TYPE_UNKNOWN\x10\x00\x12\x1d\n" +
-	"\x19REGISTRATION_CONFIRMATION\x10\x01\x12\x0f\n" +
-	"\vLOGIN_ALERT\x10\x02\x12\x16\n" +
+	"\x19NOTIFICATION_TYPE_UNKNOWN\x10\x00\x12\x10\n" +
+	"\fREGISTRATION\x10\x01\x12\t\n" +
+	"\x05LOGIN\x10\x02\x12\x16\n" +
 	"\x12INVESTMENT_SUCCESS\x10\x03\x12\x13\n" +
-	"\x0fINVESTED_IN_YOU\x10\x04*K\n" +
+	"\x0fINVESTED_IN_YOU\x10\x04\x12\t\n" +
+	"\x05OTHER\x10\x05*K\n" +
 	"\x13NotificationChannel\x12 \n" +
 	"\x1cNOTIFICATION_CHANNEL_UNKNOWN\x10\x00\x12\t\n" +
 	"\x05EMAIL\x10\x01\x12\a\n" +
-	"\x03WEB\x10\x022\x83\x03\n" +
+	"\x03WEB\x10\x022\xa3\x02\n" +
 	"\x13NotificationService\x12]\n" +
 	"\x1cSendRegistrationNotification\x12\x1d.grpc.AuthNotificationRequest\x1a\x1e.grpc.SendNotificationResponse\x12V\n" +
-	"\x15SendLoginNotification\x12\x1d.grpc.AuthNotificationRequest\x1a\x1e.grpc.SendNotificationResponse\x12Z\n" +
-	"\x19SendRecipientNotification\x12\x1d.grpc.UserNotificationRequest\x1a\x1e.grpc.SendNotificationResponse\x12Y\n" +
-	"\x18SendInvestorNotification\x12\x1d.grpc.UserNotificationRequest\x1a\x1e.grpc.SendNotificationResponseB\n" +
+	"\x15SendLoginNotification\x12\x1d.grpc.AuthNotificationRequest\x1a\x1e.grpc.SendNotificationResponse\x12U\n" +
+	"\x14SendUserNotification\x12\x1d.grpc.UserNotificationRequest\x1a\x1e.grpc.SendNotificationResponseB\n" +
 	"Z\bpkg/grpcb\x06proto3"
 
 var (
@@ -367,34 +376,30 @@ func file_notification_proto_rawDescGZIP() []byte {
 }
 
 var file_notification_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_notification_proto_goTypes = []any{
 	(NotificationType)(0),            // 0: grpc.NotificationType
 	(NotificationChannel)(0),         // 1: grpc.NotificationChannel
 	(*AuthNotificationRequest)(nil),  // 2: grpc.AuthNotificationRequest
 	(*UserNotificationRequest)(nil),  // 3: grpc.UserNotificationRequest
 	(*SendNotificationResponse)(nil), // 4: grpc.SendNotificationResponse
-	nil,                              // 5: grpc.AuthNotificationRequest.MetadataEntry
-	nil,                              // 6: grpc.UserNotificationRequest.MetadataEntry
+	nil,                              // 5: grpc.UserNotificationRequest.MetadataEntry
 }
 var file_notification_proto_depIdxs = []int32{
-	1, // 0: grpc.AuthNotificationRequest.channel:type_name -> grpc.NotificationChannel
-	5, // 1: grpc.AuthNotificationRequest.metadata:type_name -> grpc.AuthNotificationRequest.MetadataEntry
-	1, // 2: grpc.UserNotificationRequest.channels:type_name -> grpc.NotificationChannel
-	6, // 3: grpc.UserNotificationRequest.metadata:type_name -> grpc.UserNotificationRequest.MetadataEntry
-	2, // 4: grpc.NotificationService.SendRegistrationNotification:input_type -> grpc.AuthNotificationRequest
-	2, // 5: grpc.NotificationService.SendLoginNotification:input_type -> grpc.AuthNotificationRequest
-	3, // 6: grpc.NotificationService.SendRecipientNotification:input_type -> grpc.UserNotificationRequest
-	3, // 7: grpc.NotificationService.SendInvestorNotification:input_type -> grpc.UserNotificationRequest
-	4, // 8: grpc.NotificationService.SendRegistrationNotification:output_type -> grpc.SendNotificationResponse
-	4, // 9: grpc.NotificationService.SendLoginNotification:output_type -> grpc.SendNotificationResponse
-	4, // 10: grpc.NotificationService.SendRecipientNotification:output_type -> grpc.SendNotificationResponse
-	4, // 11: grpc.NotificationService.SendInvestorNotification:output_type -> grpc.SendNotificationResponse
-	8, // [8:12] is the sub-list for method output_type
-	4, // [4:8] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	0, // 0: grpc.UserNotificationRequest.type:type_name -> grpc.NotificationType
+	1, // 1: grpc.UserNotificationRequest.channels:type_name -> grpc.NotificationChannel
+	5, // 2: grpc.UserNotificationRequest.metadata:type_name -> grpc.UserNotificationRequest.MetadataEntry
+	2, // 3: grpc.NotificationService.SendRegistrationNotification:input_type -> grpc.AuthNotificationRequest
+	2, // 4: grpc.NotificationService.SendLoginNotification:input_type -> grpc.AuthNotificationRequest
+	3, // 5: grpc.NotificationService.SendUserNotification:input_type -> grpc.UserNotificationRequest
+	4, // 6: grpc.NotificationService.SendRegistrationNotification:output_type -> grpc.SendNotificationResponse
+	4, // 7: grpc.NotificationService.SendLoginNotification:output_type -> grpc.SendNotificationResponse
+	4, // 8: grpc.NotificationService.SendUserNotification:output_type -> grpc.SendNotificationResponse
+	6, // [6:9] is the sub-list for method output_type
+	3, // [3:6] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_notification_proto_init() }
@@ -408,7 +413,7 @@ func file_notification_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_notification_proto_rawDesc), len(file_notification_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   5,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
