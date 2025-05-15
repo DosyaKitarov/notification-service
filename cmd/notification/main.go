@@ -1,7 +1,10 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"net"
+	"net/http"
 	"os"
 
 	"go.uber.org/zap"
@@ -9,8 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/DosyaKitarov/notification-service/internal/handler"
-	"github.com/DosyaKitarov/notification-service/internal/repository"
-	"github.com/DosyaKitarov/notification-service/internal/service"
+	"github.com/DosyaKitarov/notification-service/internal/sync"
 	"github.com/DosyaKitarov/notification-service/pkg/config"
 	"github.com/DosyaKitarov/notification-service/pkg/database"
 	"github.com/DosyaKitarov/notification-service/pkg/email"
@@ -18,6 +20,10 @@ import (
 )
 
 func main() {
+	grpcPort := flag.Int("grpc-port", 8080, "gRPC server port")
+	wsPort := flag.Int("ws-port", 6969, "WebSocket server port")
+	flag.Parse()
+
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
 
@@ -45,9 +51,10 @@ func main() {
 	)
 
 	// gRPC server setup
-	listener, err := net.Listen("tcp", ":8080")
+	addr := fmt.Sprintf(":%d", *grpcPort)
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		logger.Fatal("Failed to listen on port 8080", zap.Error(err))
+		logger.Fatal("Failed to listen on port", zap.Int("port", *grpcPort), zap.Error(err))
 	}
 
 	emailSender := &email.EmailSender{
@@ -62,14 +69,26 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	repo := repository.NewRepository(db, logger)
-	service := service.NewNotificationService(repo, *emailSender, logger)
+	repo := sync.NewRepository(db, logger)
+	service := sync.NewNotificationService(repo, *emailSender, logger)
+	wsHandler := handler.NewWSHandler(service, logger)
 	handler := handler.NewNotificationServiceHandler(db, service, logger)
+	service.SetWebNotifier(wsHandler)
+
+	go func() {
+		http.HandleFunc("/ws", wsHandler.ServeWS)
+		wsAddr := fmt.Sprintf(":%d", *wsPort)
+		logger.Info("Starting WebSocket server", zap.Int("port", *wsPort))
+		if err := http.ListenAndServe(wsAddr, nil); err != nil {
+			logger.Fatal("Failed to start WebSocket server", zap.Error(err))
+		}
+	}()
 
 	pb.RegisterNotificationServiceServer(grpcServer, handler)
 
-	logger.Info("Starting gRPC server on port 8080")
+	logger.Info("Starting gRPC server", zap.Int("port", *grpcPort))
 	if err := grpcServer.Serve(listener); err != nil {
 		logger.Fatal("Failed to serve gRPC server", zap.Error(err))
 	}
+
 }

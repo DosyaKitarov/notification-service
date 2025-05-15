@@ -1,15 +1,15 @@
-package service
+package sync
 
 import (
 	pb "github.com/DosyaKitarov/notification-service/pkg/grpc"
 )
 
-type NotificationChannel int
+type NotificationChannel string
 
 const (
-	NotificationChannelUnknown NotificationChannel = iota
-	NotificationChannelEmail
-	NotificationChannelWeb
+	NotificationChannelUnknown NotificationChannel = "unknown"
+	NotificationChannelEmail   NotificationChannel = "email"
+	NotificationChannelWeb     NotificationChannel = "web"
 )
 
 type NotificationType string
@@ -103,13 +103,36 @@ func (user *UserNotificationRequestDTO) ToModel() Notification {
 	}
 }
 
+func (user *UserNotificationRequestDTO) toWebNotification() WebNotification {
+	return WebNotification{
+		ID:      user.UserID,
+		Subject: parseSubjectFromMetadata(user.Metadata),
+		Body:    parseBodyFromMetadata(user.Metadata),
+	}
+}
+
 type Notification struct {
+	ID                  uint64            `db:"id"`
 	UserID              uint64            `db:"user_id"`
 	Email               string            `db:"email"`
 	Name                string            `db:"name"`
 	NotificationType    string            `db:"type"`
 	NotificationChannel []string          `db:"notification_channel"`
 	Metadata            map[string]string `db:"metadata"`
+}
+
+type WebNotification struct {
+	ID      uint64 `json:"id"`
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
+}
+
+func (n *Notification) toWebNotification() WebNotification {
+	return WebNotification{
+		ID:      n.ID,
+		Subject: parseSubjectFromMetadata(n.Metadata),
+		Body:    parseBodyFromMetadata(n.Metadata),
+	}
 }
 
 func ToNotificationChannel(channel pb.NotificationChannel) NotificationChannel {
@@ -160,6 +183,8 @@ func ToNotificationType(notificationType pb.NotificationType) NotificationType {
 		return NotificationTypeInvestmentSuccess
 	case pb.NotificationType_INVESTED_IN_YOU:
 		return NotificationTypeInvestedInYou
+	case pb.NotificationType_OTHER:
+		return NotificationTypeOther
 	default:
 		return NotificationTypeUnknown
 	}
@@ -174,7 +199,24 @@ func nTtoString(notificationType NotificationType) string {
 		return "investment_success"
 	case NotificationTypeInvestedInYou:
 		return "invested_in_you"
+	case NotificationTypeOther:
+		return "other"
 	default:
 		return "unknown"
 	}
+}
+
+func parseSubjectFromMetadata(metadata map[string]string) string {
+	subject, ok := metadata["subject"]
+	if !ok {
+		return "No subject"
+	}
+	return subject
+}
+func parseBodyFromMetadata(metadata map[string]string) string {
+	body, ok := metadata["body"]
+	if !ok {
+		return "No body"
+	}
+	return body
 }
