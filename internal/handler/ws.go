@@ -30,8 +30,8 @@ type AuthMessage struct {
 }
 
 type NotificationMessage struct {
-	id       uint64            `json:"id"`
-	metadata map[string]string `json:"metadata"`
+	Id       uint64            `json:"id"`
+	Metadata map[string]string `json:"metadata"`
 }
 
 func (h *WSHandler) ServeWS(w http.ResponseWriter, r *http.Request) {
