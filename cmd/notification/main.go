@@ -12,7 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/DosyaKitarov/notification-service/internal/handler"
-	"github.com/DosyaKitarov/notification-service/internal/sync"
+	"github.com/DosyaKitarov/notification-service/internal/syncNotificaiton"
 	"github.com/DosyaKitarov/notification-service/pkg/config"
 	"github.com/DosyaKitarov/notification-service/pkg/database"
 	"github.com/DosyaKitarov/notification-service/pkg/email"
@@ -69,8 +69,8 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	repo := sync.NewRepository(db, logger)
-	service := sync.NewNotificationService(repo, *emailSender, logger)
+	repo := syncNotificaiton.NewRepository(db, logger)
+	service := syncNotificaiton.NewNotificationService(repo, *emailSender, logger)
 	wsHandler := handler.NewWSHandler(service, logger)
 	handler := handler.NewNotificationServiceHandler(db, service, logger)
 	service.SetWebNotifier(wsHandler)

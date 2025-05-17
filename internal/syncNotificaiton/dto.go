@@ -1,4 +1,4 @@
-package sync
+package syncNotificaiton
 
 import (
 	pb "github.com/DosyaKitarov/notification-service/pkg/grpc"

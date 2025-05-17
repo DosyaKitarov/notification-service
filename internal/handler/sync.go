@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	sync "github.com/DosyaKitarov/notification-service/internal/sync"
+	sync "github.com/DosyaKitarov/notification-service/internal/syncNotificaiton"
 	pb "github.com/DosyaKitarov/notification-service/pkg/grpc"
 	"github.com/DosyaKitarov/notification-service/pkg/validator"
 	"go.uber.org/zap"

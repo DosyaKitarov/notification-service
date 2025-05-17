@@ -3,5 +3,9 @@ database:
   user: "postgres"
   password: "yourpassword"
   dbname: "mydb"
-  port: "5432"
+  port: 5432
   sslmode: "disable"
+smtp:
+  sender_email: "email@example.com"
+  username: "username"
+  password: "password"

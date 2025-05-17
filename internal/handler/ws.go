@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sync"
 
-	syncService "github.com/DosyaKitarov/notification-service/internal/sync"
+	syncService "github.com/DosyaKitarov/notification-service/internal/syncNotificaiton"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 )
