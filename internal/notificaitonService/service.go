@@ -1,4 +1,4 @@
-package syncNotificaiton
+package notificaitonService
 
 import (
 	"context"

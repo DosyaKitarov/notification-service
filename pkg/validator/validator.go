@@ -3,16 +3,16 @@ package validator
 import (
 	"errors"
 
-	"github.com/DosyaKitarov/notification-service/internal/syncNotificaiton"
+	"github.com/DosyaKitarov/notification-service/internal/notificaitonService"
 )
 
 type NotificationChannel string
 
-func ValidateAuthNotificationRequest(req syncNotificaiton.AuthNotificationRequest) error {
+func ValidateAuthNotificationRequest(req notificaitonService.AuthNotificationRequest) error {
 	if req.UserID == 0 {
 		return errors.New("UserID cannot be zero")
 	}
-	if req.NotificationChannel == syncNotificaiton.NotificationChannelUnknown {
+	if req.NotificationChannel == notificaitonService.NotificationChannelUnknown {
 		return errors.New("NotificationChannel cannot be empty")
 	}
 	if req.Email == "" {
@@ -24,7 +24,7 @@ func ValidateAuthNotificationRequest(req syncNotificaiton.AuthNotificationReques
 	return nil
 }
 
-func ValidateUserNotificationRequest(req syncNotificaiton.UserNotificationRequest) error {
+func ValidateUserNotificationRequest(req notificaitonService.UserNotificationRequest) error {
 	if req.UserID == 0 {
 		return errors.New("UserID cannot be zero")
 	}
@@ -35,7 +35,7 @@ func ValidateUserNotificationRequest(req syncNotificaiton.UserNotificationReques
 		return errors.New("Name cannot be empty")
 	}
 	for _, channel := range req.Channels {
-		if channel == syncNotificaiton.NotificationChannelUnknown {
+		if channel == notificaitonService.NotificationChannelUnknown {
 			return errors.New("Channels cannot contain an empty NotificationChannel")
 		}
 	}
