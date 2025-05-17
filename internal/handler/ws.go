@@ -29,6 +29,10 @@ type AuthMessage struct {
 	UserID uint64 `json:"user_id"`
 }
 
+type IsReadMessage struct {
+	Id uint64 `json:"is_read"`
+}
+
 type NotificationMessage struct {
 	Id       uint64            `json:"id"`
 	Metadata map[string]string `json:"metadata"`
@@ -84,6 +88,14 @@ func (h *WSHandler) ServeWS(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		h.Logger.Info("Received WS message", zap.ByteString("msg", msg))
+		var isReadMessage IsReadMessage
+		if err := json.Unmarshal(msg, &isReadMessage); err != nil {
+			h.Logger.Error("Failed to unmarshal message", zap.Error(err))
+			continue
+		}
+		if err := h.Service.MarkNotificationAsRead(r.Context(), isReadMessage.Id); err != nil {
+			h.Logger.Error("Failed to mark notification as read", zap.Error(err))
+		}
 	}
 
 	// Удаляем соединение при отключении

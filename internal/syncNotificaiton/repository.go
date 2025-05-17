@@ -88,3 +88,17 @@ func (r *Repository) GetUnreadWebNotifications(ctx context.Context, userID uint6
 	}
 	return notifications, nil
 }
+
+func (r *Repository) MarkNotificationAsRead(ctx context.Context, tx *sql.Tx, notificationID uint64) error {
+	query := `
+		UPDATE web_notifications
+		SET is_read = true
+		WHERE id = $1
+	`
+	_, err := tx.ExecContext(ctx, query, notificationID)
+	if err != nil {
+		r.logger.Error("Failed to mark notification as read", zap.Error(err))
+		return err
+	}
+	return nil
+}

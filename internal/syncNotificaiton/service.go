@@ -14,6 +14,7 @@ type NotificationRepository interface {
 	SaveWebNotificationWithTx(ctx context.Context, tx *sql.Tx, n Notification) error
 	GetUnreadWebNotifications(ctx context.Context, userID uint64) ([]Notification, error)
 	BeginTransaction(ctx context.Context) (*sql.Tx, error)
+	MarkNotificationAsRead(ctx context.Context, tx *sql.Tx, notificationID uint64) error
 }
 
 type WebNotifier interface {
@@ -217,4 +218,36 @@ func (s *NotificationService) GetUnreadWebNotifications(ctx context.Context, use
 	}
 
 	return webNotifications, nil
+}
+
+func (s *NotificationService) MarkNotificationAsRead(ctx context.Context, notificationID uint64) error {
+	s.logger.Info("Starting MarkNotificationAsRead process")
+
+	tx, err := s.repo.BeginTransaction(ctx)
+	if err != nil {
+		s.logger.Error("Error starting transaction", zap.Error(err))
+		return err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			if commitErr := tx.Commit(); commitErr != nil {
+				s.logger.Error("Error committing transaction", zap.Error(commitErr))
+				err = commitErr
+			}
+		}
+	}()
+
+	err = s.repo.MarkNotificationAsRead(ctx, tx, notificationID)
+	if err != nil {
+		s.logger.Error("Error marking notification as read", zap.Error(err))
+		return err
+	}
+	s.logger.Info("Notification marked as read successfully")
+
+	return nil
 }
