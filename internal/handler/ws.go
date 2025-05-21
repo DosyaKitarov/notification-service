@@ -39,7 +39,11 @@ type NotificationMessage struct {
 }
 
 func (h *WSHandler) ServeWS(w http.ResponseWriter, r *http.Request) {
-	upgrader := websocket.Upgrader{}
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		h.Logger.Error("Failed to upgrade connection", zap.Error(err))
