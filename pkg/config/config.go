@@ -15,7 +15,15 @@ type Config struct {
 		Password string `yaml:"password"`
 	} `yaml:"smtp"`
 	Kafka struct {
-		Ports []string `yaml:"ports"`
-		Topic string   `yaml:"topic"`
-	}
+		Topic string `yaml:"topic"`
+	} `yaml:"kafka"`
+	WS struct {
+		PublicKey string `yaml:"public_key"`
+	} `yaml:"ws"`
+	Ports struct {
+		HTTP  int      `yaml:"http"`
+		GRPC  int      `yaml:"grpc"`
+		WS    int      `yaml:"ws"`
+		Kafka []string `yaml:"kafka"`
+	} `yaml:"ports"`
 }

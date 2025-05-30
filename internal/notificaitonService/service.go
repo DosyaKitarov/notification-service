@@ -15,6 +15,7 @@ type NotificationRepository interface {
 	GetUnreadWebNotifications(ctx context.Context, userID uint64) ([]Notification, error)
 	BeginTransaction(ctx context.Context) (*sql.Tx, error)
 	MarkNotificationAsRead(ctx context.Context, tx *sql.Tx, notificationID uint64) error
+	GetEmailNotifications(ctx context.Context, request GetNotificationsRequest) (GetEmailNotifications, error)
 }
 
 type WebNotifier interface {
@@ -250,4 +251,16 @@ func (s *NotificationService) MarkNotificationAsRead(ctx context.Context, notifi
 	s.logger.Info("Notification marked as read successfully")
 
 	return nil
+}
+
+func (s *NotificationService) GetEmailNotifications(ctx context.Context, request GetNotificationsRequest) (GetEmailNotifications, error) {
+	s.logger.Info("Starting GetEmailNotifications process")
+
+	response, err := s.repo.GetEmailNotifications(ctx, request)
+	if err != nil {
+		s.logger.Error("GetEmailNotifications response error", zap.Error(err))
+		return GetEmailNotifications{}, err
+	}
+
+	return response, nil
 }

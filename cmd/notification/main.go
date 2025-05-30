@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"flag"
 	"fmt"
 	"net"
 	"net/http"
@@ -22,7 +21,7 @@ import (
 )
 
 func main() {
-	grpcPort, wsPort := parseFlags()
+
 	logger := initLogger()
 	defer logger.Sync()
 
@@ -31,6 +30,10 @@ func main() {
 	db := initDB(cfg, logger)
 	defer db.Close()
 
+	grpcPort := cfg.Ports.GRPC
+	wsPort := cfg.Ports.WS
+	httpPort := cfg.Ports.HTTP
+
 	emailSender := initEmailSender(cfg, logger)
 	repo := notificaitonService.NewRepository(db, logger)
 	service := notificaitonService.NewNotificationService(repo, *emailSender, logger)
@@ -38,17 +41,12 @@ func main() {
 	grpcHandler := handler.NewNotificationServiceHandler(db, service, logger)
 	service.SetWebNotifier(wsHandler)
 	kafkaHandler := handler.NewKafkaHandler(grpcHandler, logger)
-
+	restHandler := handler.NewRestNotificationServiceHandler(db, service, logger)
+	router := handler.NewRouter(restHandler)
+	go startHTTPServer(httpPort, router, logger)
 	go startWebSocketServer(wsPort, wsHandler, logger)
 	go startGRPCServer(grpcPort, grpcHandler, logger)
 	startConsumer(ctx, kafkaHandler, cfg, logger)
-}
-
-func parseFlags() (grpcPort, wsPort int) {
-	grpc := flag.Int("grpc-port", 8080, "gRPC server port")
-	ws := flag.Int("ws-port", 6969, "WebSocket server port")
-	flag.Parse()
-	return *grpc, *ws
 }
 
 func initLogger() *zap.Logger {
@@ -121,8 +119,16 @@ func startGRPCServer(port int, grpcHandler pb.NotificationServiceServer, logger 
 }
 
 func startConsumer(ctx context.Context, kh *handler.KafkaHandler, cfg config.Config, logger *zap.Logger) {
-	err := kh.ListenAndServe(ctx, cfg.Kafka.Ports, cfg.Kafka.Topic)
+	err := kh.ListenAndServe(ctx, cfg.Ports.Kafka, cfg.Kafka.Topic)
 	if err != nil {
 		logger.Fatal("Kafka consumer ended with error", zap.Error(err))
+	}
+}
+
+func startHTTPServer(port int, router http.Handler, logger *zap.Logger) {
+	addr := fmt.Sprintf(":%d", port)
+	logger.Info("Starting HTTP server", zap.Int("port", port))
+	if err := http.ListenAndServe(addr, router); err != nil {
+		logger.Fatal("Failed to start HTTP server", zap.Error(err))
 	}
 }

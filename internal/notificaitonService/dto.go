@@ -28,6 +28,12 @@ const (
 	EmailTemplateLogin        = "login"
 )
 
+const (
+	DefaultPerPageParam = 10
+	DefaultPageNumParam = 1
+	PerPageLimit        = 1000
+)
+
 type AuthNotificationRequest struct {
 	UserID              uint64
 	Email               string
@@ -121,6 +127,25 @@ type Notification struct {
 	Metadata            map[string]string `db:"metadata"`
 }
 
+type EmailNotificationRespone struct {
+	UserID           uint64            `db:"user_id"`
+	Email            string            `db:"email"`
+	Name             string            `db:"name"`
+	NotificationType string            `db:"type"`
+	Metadata         map[string]string `db:"metadata"`
+	CreatedAt        string            `db:"created_at"`
+}
+
+type WebNotificationResponse struct {
+	UserID           uint64            `db:"user_id"`
+	Email            string            `db:"email"`
+	Name             string            `db:"name"`
+	NotificationType string            `db:"type"`
+	Metadata         map[string]string `db:"metadata"`
+	CreatedAt        string            `db:"created_at"`
+	IsRead           bool              `db:"is_read"`
+}
+
 type WebNotification struct {
 	ID      uint64 `json:"id"`
 	Subject string `json:"subject"`
@@ -133,6 +158,33 @@ func (n *Notification) toWebNotification() WebNotification {
 		Subject: parseSubjectFromMetadata(n.Metadata),
 		Body:    parseBodyFromMetadata(n.Metadata),
 	}
+}
+
+type GetNotificationsRequest struct {
+	PerPage uint32
+	Page    uint32
+}
+
+type GetEmailNotifications struct {
+	Notifications []EmailNotificationRespone
+	Total         uint32
+}
+
+func (g *GetNotificationsRequest) getPage() uint32 {
+	if g.Page == 0 {
+		g.Page = DefaultPageNumParam
+	}
+	return (g.Page - 1) * g.getPerPage()
+}
+
+func (g *GetNotificationsRequest) getPerPage() uint32 {
+	if g.PerPage == 0 {
+		return DefaultPerPageParam
+	}
+	if g.PerPage > PerPageLimit {
+		return PerPageLimit
+	}
+	return g.PerPage
 }
 
 func ToNotificationChannel(channel pb.NotificationChannel) NotificationChannel {

@@ -26,7 +26,6 @@ type EmailData struct {
 	Name string
 }
 
-// LoadTemplates loads email templates from a JSON file
 func (ES *EmailSender) LoadTemplates(filePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -45,21 +44,17 @@ func (ES *EmailSender) LoadTemplates(filePath string) error {
 }
 
 func (ES *EmailSender) SendAuthEmail(templateName string, receiver, name string) error {
-	// Ensure templates are loaded
 	if ES.Templates == nil {
 		return fmt.Errorf("templates not loaded")
 	}
 
-	// Get the template by name
 	emailTemplate, ok := ES.Templates[templateName]
 	if !ok {
 		return fmt.Errorf("template '%s' not found", templateName)
 	}
 
-	// Prepare data for the templates
 	data := EmailData{Name: name}
 
-	// Parse and execute the subject template
 	subjectTpl, err := template.New("subject").Parse(emailTemplate.Subject)
 	if err != nil {
 		return fmt.Errorf("failed to parse subject template: %w", err)
@@ -69,7 +64,6 @@ func (ES *EmailSender) SendAuthEmail(templateName string, receiver, name string)
 		return fmt.Errorf("failed to execute subject template: %w", err)
 	}
 
-	// Parse and execute the body template
 	bodyTpl, err := template.New("body").Parse(emailTemplate.Body)
 	if err != nil {
 		return fmt.Errorf("failed to parse body template: %w", err)
@@ -79,7 +73,6 @@ func (ES *EmailSender) SendAuthEmail(templateName string, receiver, name string)
 		return fmt.Errorf("failed to execute body template: %w", err)
 	}
 
-	// Send the email
 	d := gomail.NewDialer("sandbox.smtp.mailtrap.io", 587, ES.Username, ES.Password)
 
 	m := gomail.NewMessage()
@@ -96,7 +89,6 @@ func (ES *EmailSender) SendAuthEmail(templateName string, receiver, name string)
 }
 
 func (ES *EmailSender) SendUserEmail(receiver string, metadata map[string]string) error {
-	// Send the email
 	d := gomail.NewDialer("sandbox.smtp.mailtrap.io", 587, ES.Username, ES.Password)
 
 	m := gomail.NewMessage()

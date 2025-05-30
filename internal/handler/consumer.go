@@ -10,14 +10,14 @@ import (
 )
 
 type KafkaHandler struct {
-	NotificationServiceHandler
+	GrpcNotificationServiceHandler
 	logger *zap.Logger
 }
 
-func NewKafkaHandler(notificationServiceHandler *NotificationServiceHandler, logger *zap.Logger) *KafkaHandler {
+func NewKafkaHandler(notificationServiceHandler *GrpcNotificationServiceHandler, logger *zap.Logger) *KafkaHandler {
 	return &KafkaHandler{
-		NotificationServiceHandler: *notificationServiceHandler,
-		logger:                     logger,
+		GrpcNotificationServiceHandler: *notificationServiceHandler,
+		logger:                         logger,
 	}
 }
 
@@ -47,7 +47,7 @@ func (kh *KafkaHandler) ListenAndServe(ctx context.Context, brokers []string, to
 			kh.logger.Error("Proto unmarshall error: %v", zap.Error(err))
 			continue
 		}
-		_, err = kh.NotificationServiceHandler.SendUserNotification(ctx, &notificaion)
+		_, err = kh.GrpcNotificationServiceHandler.SendUserNotification(ctx, &notificaion)
 		if err != nil {
 			kh.logger.Error("Error occured on send user notification", zap.Error(err))
 			continue

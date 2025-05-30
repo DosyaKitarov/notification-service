@@ -5,13 +5,13 @@ import (
 	"database/sql"
 	"fmt"
 
-	sync "github.com/DosyaKitarov/notification-service/internal/notificaitonService"
+	service "github.com/DosyaKitarov/notification-service/internal/notificaitonService"
 	pb "github.com/DosyaKitarov/notification-service/pkg/grpc"
 	"github.com/DosyaKitarov/notification-service/pkg/validator"
 	"go.uber.org/zap"
 )
 
-type NotificationServiceHandler struct {
+type GrpcNotificationServiceHandler struct {
 	NotificationService
 	pb.UnimplementedNotificationServiceServer
 	db     *sql.DB
@@ -19,30 +19,31 @@ type NotificationServiceHandler struct {
 }
 
 type NotificationService interface {
-	RegistrationNotification(ctx context.Context, notification sync.AuthNotificationRequestDTO) error
-	LoginNotification(ctx context.Context, notification sync.AuthNotificationRequestDTO) error
-	UserNotification(ctx context.Context, notification sync.UserNotificationRequestDTO) error
+	RegistrationNotification(ctx context.Context, notification service.AuthNotificationRequestDTO) error
+	LoginNotification(ctx context.Context, notification service.AuthNotificationRequestDTO) error
+	UserNotification(ctx context.Context, notification service.UserNotificationRequestDTO) error
+	GetEmailNotifications(ctx context.Context, request service.GetNotificationsRequest) (service.GetEmailNotifications, error)
 }
 
-func NewNotificationServiceHandler(db *sql.DB, syncService NotificationService, logger *zap.Logger) *NotificationServiceHandler {
-	return &NotificationServiceHandler{
+func NewNotificationServiceHandler(db *sql.DB, syncService NotificationService, logger *zap.Logger) *GrpcNotificationServiceHandler {
+	return &GrpcNotificationServiceHandler{
 		db:                  db,
 		NotificationService: syncService,
 		logger:              logger,
 	}
 }
 
-func (h *NotificationServiceHandler) SendRegistrationNotification(ctx context.Context, req *pb.AuthNotificationRequest) (*pb.SendNotificationResponse, error) {
+func (h *GrpcNotificationServiceHandler) SendRegistrationNotification(ctx context.Context, req *pb.AuthNotificationRequest) (*pb.SendNotificationResponse, error) {
 	h.logger.Info("Received SendRegistrationNotification request", zap.Any("request", req))
 
 	var (
 		userID  = req.GetUserId()
 		email   = req.GetEmail()
-		channel = sync.ToNotificationChannel(1)
+		channel = service.ToNotificationChannel(1)
 		name    = req.GetName()
 	)
 
-	notification := &sync.AuthNotificationRequest{
+	notification := &service.AuthNotificationRequest{
 		UserID:              userID,
 		Email:               email,
 		Name:                name,
@@ -54,7 +55,7 @@ func (h *NotificationServiceHandler) SendRegistrationNotification(ctx context.Co
 		return &pb.SendNotificationResponse{Success: false, Error: err.Error()}, nil
 	}
 
-	if err := h.NotificationService.RegistrationNotification(ctx, notification.ToDTO(string(sync.NotificationTypeRegistration))); err != nil {
+	if err := h.NotificationService.RegistrationNotification(ctx, notification.ToDTO(string(service.NotificationTypeRegistration))); err != nil {
 		h.logger.Error("Failed to process SendRegistrationNotification", zap.Error(err))
 		return &pb.SendNotificationResponse{Success: false, Error: err.Error()}, nil
 	}
@@ -65,7 +66,7 @@ func (h *NotificationServiceHandler) SendRegistrationNotification(ctx context.Co
 	return &pb.SendNotificationResponse{Success: true}, nil
 }
 
-func (h *NotificationServiceHandler) SendLoginNotification(ctx context.Context, req *pb.AuthNotificationRequest) (*pb.SendNotificationResponse, error) {
+func (h *GrpcNotificationServiceHandler) SendLoginNotification(ctx context.Context, req *pb.AuthNotificationRequest) (*pb.SendNotificationResponse, error) {
 	h.logger.Info("Received SendLoginNotification request", zap.Any("request", req))
 
 	fmt.Printf("\n\n%+v\n\n", req)
@@ -74,10 +75,10 @@ func (h *NotificationServiceHandler) SendLoginNotification(ctx context.Context, 
 		userID  = req.GetUserId()
 		email   = req.GetEmail()
 		name    = req.GetName()
-		channel = sync.ToNotificationChannel(1)
+		channel = service.ToNotificationChannel(1)
 	)
 
-	notification := &sync.AuthNotificationRequest{
+	notification := &service.AuthNotificationRequest{
 		UserID:              userID,
 		Email:               email,
 		Name:                name,
@@ -89,7 +90,7 @@ func (h *NotificationServiceHandler) SendLoginNotification(ctx context.Context, 
 		return &pb.SendNotificationResponse{Success: false, Error: err.Error()}, nil
 	}
 
-	if err := h.NotificationService.LoginNotification(ctx, notification.ToDTO(string(sync.NotificationTypeLogin))); err != nil {
+	if err := h.NotificationService.LoginNotification(ctx, notification.ToDTO(string(service.NotificationTypeLogin))); err != nil {
 		h.logger.Error("Failed to process SendLoginNotification", zap.Error(err))
 		return &pb.SendNotificationResponse{Success: false, Error: err.Error()}, nil
 	}
@@ -101,7 +102,7 @@ func (h *NotificationServiceHandler) SendLoginNotification(ctx context.Context, 
 	return &pb.SendNotificationResponse{Success: true}, nil
 }
 
-func (h *NotificationServiceHandler) SendUserNotification(ctx context.Context, req *pb.UserNotificationRequest) (*pb.SendNotificationResponse, error) {
+func (h *GrpcNotificationServiceHandler) SendUserNotification(ctx context.Context, req *pb.UserNotificationRequest) (*pb.SendNotificationResponse, error) {
 	h.logger.Info("Received SendUserNotification request", zap.Any("request", req))
 	var (
 		userID           = req.GetUserId()
@@ -112,12 +113,12 @@ func (h *NotificationServiceHandler) SendUserNotification(ctx context.Context, r
 		metadata         = req.GetMetadata()
 	)
 
-	notification := &sync.UserNotificationRequest{
+	notification := &service.UserNotificationRequest{
 		UserID:   userID,
 		Email:    email,
 		Name:     name,
-		Type:     sync.ToNotificationType(notificationType),
-		Channels: sync.ToNotificationChannels(channels),
+		Type:     service.ToNotificationType(notificationType),
+		Channels: service.ToNotificationChannels(channels),
 		Metadata: metadata,
 	}
 

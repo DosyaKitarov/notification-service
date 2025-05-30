@@ -1,23 +1,24 @@
 version: '3.8'
 
 services:
-  notification-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: notification-service
-    ports:
-      - "8080:8080"
-      - "6969:6969"
+#   notification-service:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     container_name: notification-service
+#     ports:
+#       - "8081:8081"
+#       - "8080:8080"
+#       - "6969:6969"
 
-    depends_on:
-      kafka:
-        condition: service_started
-      migrate:
-        condition: service_completed_successfully
-    volumes:
-      - ./config:/app/config
-      - ./pkg/email:/app/pkg/email
+#     depends_on:
+#       kafka:
+#         condition: service_started
+#       migrate:
+#         condition: service_completed_successfully
+#     volumes:
+#       - ./config:/app/config
+#       - ./pkg/email:/app/pkg/email
 
   kafka:
     image: bitnami/kafka:3.7
@@ -37,28 +38,28 @@ services:
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
       - ALLOW_PLAINTEXT_LISTENER=yes
   
-  postgres:
-    image: postgres:15
-    container_name: postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: postgres
-    ports:
-      - "5433:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+  # postgres:
+  #   image: postgres:15
+  #   container_name: postgres
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: root
+  #     POSTGRES_DB: postgres
+  #   ports:
+  #     - "5433:5432"
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
 
-  migrate:
-    image: migrate/migrate
-    depends_on:
-      - postgres
-    volumes:
-      - ./migrations:/migrations
-    command: [
-      "-path", "/migrations",
-      "-database", "postgres://postgres:root@postgres:5432/postgres?sslmode=disable",
-      "up"
-    ]
+  # migrate:
+  #   image: migrate/migrate
+  #   depends_on:
+  #     - postgres
+  #   volumes:
+  #     - ./migrations:/migrations
+  #   command: [
+  #     "-path", "/migrations",
+  #     "-database", "postgres://postgres:root@postgres:5432/postgres?sslmode=disable",
+  #     "up"
+  #   ]
 volumes:
   pgdata:

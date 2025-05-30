@@ -20,3 +20,11 @@ run:
 
 migrate:
 	go run ./cmd/migrate/
+
+.PHONY: compose-up
+compose-up:
+	docker compose -f docker-compose.yml up 
+
+.PHONY: compose-build
+compose-build:
+	docker compose -f docker-compose.yml build

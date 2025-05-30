@@ -2,6 +2,7 @@ package validator
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/DosyaKitarov/notification-service/internal/notificaitonService"
 )
@@ -49,4 +50,20 @@ func ValidateUserNotificationRequest(req notificaitonService.UserNotificationReq
 		return errors.New("Metadata cannot be empty")
 	}
 	return nil
+}
+
+func ParsePageNumParam(page string) uint32 {
+	pageNum, err := strconv.Atoi(page)
+	if err != nil || pageNum <= 0 {
+		return notificaitonService.DefaultPageNumParam
+	}
+	return uint32(pageNum)
+}
+
+func ParsePerPageParam(perPage string) uint32 {
+	perPageNum, err := strconv.Atoi(perPage)
+	if err != nil || perPageNum <= 0 || perPageNum > notificaitonService.PerPageLimit {
+		return notificaitonService.DefaultPerPageParam
+	}
+	return uint32(perPageNum)
 }

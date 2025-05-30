@@ -102,3 +102,80 @@ func (r *Repository) MarkNotificationAsRead(ctx context.Context, tx *sql.Tx, not
 	}
 	return nil
 }
+
+func (r *Repository) GetEmailNotifications(ctx context.Context, request GetNotificationsRequest) (GetEmailNotifications, error) {
+	var (
+		result = make([]EmailNotificationRespone, 0, request.getPerPage())
+		total  sql.NullInt32
+
+		query = `
+        WITH data_CTE AS (
+            SELECT 
+                user_id,
+                email,
+                name,
+                type,
+                metadata,
+                created_at
+            FROM email_notifications
+            ORDER BY created_at DESC
+            LIMIT $1
+            OFFSET $2
+        ),
+        total AS (
+            SELECT count(1) as total FROM email_notifications
+        )
+        SELECT 
+            t.total,
+            d.user_id,
+            d.email,
+            d.name,
+            d.type,
+            d.metadata,
+            d.created_at
+        FROM total t CROSS JOIN data_CTE d;
+        `
+	)
+
+	rows, err := r.db.QueryContext(
+		ctx,
+		query,
+		request.getPerPage(),
+		request.getPage(),
+	)
+	if err != nil {
+		r.logger.Error("Failed to get email notifications from database", zap.Error(err))
+		return GetEmailNotifications{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var n EmailNotificationRespone
+		var metadataBytes []byte
+		if err := rows.Scan(
+			&total,
+			&n.UserID,
+			&n.Email,
+			&n.Name,
+			&n.NotificationType,
+			&metadataBytes,
+			&n.CreatedAt,
+		); err != nil {
+			r.logger.Error("Failed to scan email notification", zap.Error(err))
+			return GetEmailNotifications{}, err
+		}
+		if err := json.Unmarshal(metadataBytes, &n.Metadata); err != nil {
+			r.logger.Error("Failed to unmarshal metadata", zap.Error(err))
+			return GetEmailNotifications{}, err
+		}
+		result = append(result, n)
+	}
+	if rows.Err() != nil {
+		return GetEmailNotifications{}, rows.Err()
+	}
+
+	return GetEmailNotifications{
+		Notifications: result,
+		Total:         uint32(total.Int32),
+	}, nil
+}
