@@ -169,6 +169,10 @@ type GetEmailNotifications struct {
 	Notifications []EmailNotificationRespone
 	Total         uint32
 }
+type GetWebNotifications struct {
+	Notifications []WebNotificationResponse
+	Total         uint32
+}
 
 func (g *GetNotificationsRequest) getPage() uint32 {
 	if g.Page == 0 {

@@ -179,3 +179,83 @@ func (r *Repository) GetEmailNotifications(ctx context.Context, request GetNotif
 		Total:         uint32(total.Int32),
 	}, nil
 }
+
+func (r *Repository) GetWebNotifications(ctx context.Context, request GetNotificationsRequest) (GetWebNotifications, error) {
+	var (
+		result = make([]WebNotificationResponse, 0, request.getPerPage())
+		total  sql.NullInt32
+
+		query = `
+        WITH data_CTE AS (
+            SELECT 
+                user_id,
+                email,
+                name,
+                type,
+                metadata,
+				is_read,
+                created_at
+            FROM web_notifications
+            ORDER BY created_at DESC
+            LIMIT $1
+            OFFSET $2
+        ),
+        total AS (
+            SELECT count(1) as total FROM web_notifications
+        )
+        SELECT 
+            t.total,
+            d.user_id,
+            d.email,
+            d.name,
+            d.type,
+            d.metadata,
+			d.is_read,
+            d.created_at
+        FROM total t CROSS JOIN data_CTE d;
+        `
+	)
+
+	rows, err := r.db.QueryContext(
+		ctx,
+		query,
+		request.getPerPage(),
+		request.getPage(),
+	)
+	if err != nil {
+		r.logger.Error("Failed to get email notifications from database", zap.Error(err))
+		return GetWebNotifications{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var n WebNotificationResponse
+		var metadataBytes []byte
+		if err := rows.Scan(
+			&total,
+			&n.UserID,
+			&n.Email,
+			&n.Name,
+			&n.NotificationType,
+			&metadataBytes,
+			&n.IsRead,
+			&n.CreatedAt,
+		); err != nil {
+			r.logger.Error("Failed to scan email notification", zap.Error(err))
+			return GetWebNotifications{}, err
+		}
+		if err := json.Unmarshal(metadataBytes, &n.Metadata); err != nil {
+			r.logger.Error("Failed to unmarshal metadata", zap.Error(err))
+			return GetWebNotifications{}, err
+		}
+		result = append(result, n)
+	}
+	if rows.Err() != nil {
+		return GetWebNotifications{}, rows.Err()
+	}
+
+	return GetWebNotifications{
+		Notifications: result,
+		Total:         uint32(total.Int32),
+	}, nil
+}

@@ -54,6 +54,33 @@ func (h *RestNotificationServiceHandler) GetEmailNotifications(w http.ResponseWr
 
 }
 
+func (h *RestNotificationServiceHandler) GetWebNotifications(w http.ResponseWriter, r *http.Request) {
+	var (
+		ctx     = r.Context()
+		perPage = r.URL.Query().Get("per_page")
+		page    = r.URL.Query().Get("page")
+	)
+
+	h.logger.Info("Received GetWebNotifications request", zap.String("per_page", perPage), zap.String("page", page))
+
+	GetWebNotification := notificaitonService.GetNotificationsRequest{
+		PerPage: validator.ParsePerPageParam(perPage),
+		Page:    validator.ParsePageNumParam(page),
+	}
+
+	response, err := h.NotificationService.GetWebNotifications(ctx, GetWebNotification)
+	if err != nil {
+		h.logger.Error("Failed to get web notifications", zap.Error(err))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_ = statusResponse(w, &R{
+		Status:     http.StatusOK,
+		StatusCode: http.StatusText(http.StatusOK),
+		Data:       response,
+	})
+}
+
 func statusResponse(w http.ResponseWriter, response *R) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.Status)

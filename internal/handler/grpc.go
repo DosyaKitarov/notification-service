@@ -23,6 +23,7 @@ type NotificationService interface {
 	LoginNotification(ctx context.Context, notification service.AuthNotificationRequestDTO) error
 	UserNotification(ctx context.Context, notification service.UserNotificationRequestDTO) error
 	GetEmailNotifications(ctx context.Context, request service.GetNotificationsRequest) (service.GetEmailNotifications, error)
+	GetWebNotifications(ctx context.Context, request service.GetNotificationsRequest) (service.GetWebNotifications, error)
 }
 
 func NewNotificationServiceHandler(db *sql.DB, syncService NotificationService, logger *zap.Logger) *GrpcNotificationServiceHandler {
