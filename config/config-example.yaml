@@ -1,16 +1,21 @@
 database:
   host: "localhost"
   user: "postgres"
-  password: "yourpassword"
-  dbname: "mydb"
+  password: "pos"
+  dbname: "postgres"
   port: 5432
   sslmode: "disable"
-  
+
 smtp:
   sender_email: "email@example.com"
-  username: "username"
-  password: "password"
+  username: "mailtrap username"
+  password: "mailtrap password"
 
-  kafka:
-  ports: ["kafka:9092"]
+kafka:
   topic: "notifications"
+  
+ports:
+  http: 8081
+  grpc: 8080
+  ws: 6969
+  kafka: ["localhost:9093"]

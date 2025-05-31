@@ -17,9 +17,6 @@ type Config struct {
 	Kafka struct {
 		Topic string `yaml:"topic"`
 	} `yaml:"kafka"`
-	WS struct {
-		PublicKey string `yaml:"public_key"`
-	} `yaml:"ws"`
 	Ports struct {
 		HTTP  int      `yaml:"http"`
 		GRPC  int      `yaml:"grpc"`
